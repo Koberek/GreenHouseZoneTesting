@@ -51,7 +51,7 @@ int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
 
-int waterSchedule[]   {6,0,18,55};       // 24 hour clock. {H,M,H,M.....}
+int waterSchedule[]   {6,0};       // 24 hour clock. {H,M,H,M.....}
 
 bool waterZone1ON        = false;             // true if it is time to water
 bool waterZone2ON        = false;             // true if it is time to water

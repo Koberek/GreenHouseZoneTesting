@@ -10,9 +10,34 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     }
     else {return false;}
     }
+    
   if (PID == WATER_Zone2){
     if ((millis() - WATER_Zone2_lastRead_millis) >= WATER_Zone2_int){   // set to 2minutes
       WATER_Zone2_lastRead_millis = millis();
+      return true;
+    }
+    else {return false;}
+    }
+
+  if (PID == WATER_Zone3){
+    if ((millis() - WATER_Zone3_lastRead_millis) >= WATER_Zone3_int){   // set to 2minutes
+      WATER_Zone3_lastRead_millis = millis();
+      return true;
+    }
+    else {return false;}
+    }
+
+  if (PID == WATER_Zone4){
+    if ((millis() - WATER_Zone4_lastRead_millis) >= WATER_Zone4_int){   // set to 2minutes
+      WATER_Zone4_lastRead_millis = millis();
+      return true;
+    }
+    else {return false;}
+    }
+
+  if (PID == WATER_Zone5){
+    if ((millis() - WATER_Zone5_lastRead_millis) >= WATER_Zone5_int){   // set to 2minutes
+      WATER_Zone5_lastRead_millis = millis();
       return true;
     }
     else {return false;}
@@ -64,7 +89,7 @@ void receiveRPiData(void){
 
 
 void waterPots(void){
-  bool endwatering;               // endwatering true when watering time has expired
+  bool endwatering;               // endwatering true when watering time/duration has expired
                                    
     // ZONE 1 watering control
     if (waterZone1ON == false){              // waterON = false if it's not time to water
