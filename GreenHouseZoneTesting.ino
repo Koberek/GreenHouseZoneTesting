@@ -24,25 +24,50 @@
 #define ON  LOW                           // Active LOW inputs on the external relay board
 
 // for the timer and time
-#define WATER_Zone1 0x03
-unsigned long WATER_Zone1_int = 120000;           // 2 minute watering DURATION timer. Water ON for 2 minutes
-#define WATER_Zone2 0x04
-unsigned long WATER_Zone2_int = 120000;           // 2 minute watering DURATION timer. Water ON for 2 minutes
-#define WATER_Zone3 0x05
-unsigned long WATER_Zone3_int = 120000;           // 2 minute watering DURATION timer. Water ON for 2 minutes
-#define WATER_Zone4 0x06
-unsigned long WATER_Zone4_int = 120000;           // 2 minute watering DURATION timer. Water ON for 2 minutes
-#define WATER_Zone5 0x07
-unsigned long WATER_Zone5_int = 120000;           // NOT USED. 2 minute watering DURATION timer. Water ON for 2 minutes
-#define RUNNING     0x08
-unsigned long RUNNING_int   = 250;          // LED toggle only indicates prgram running
+#define PROBE       0X01
+unsigned long PROBE_int       = 60000;
+#define PRINT       0x02
+unsigned long PRINT_int       = 1000;
 
-// init the timers                       
+#define WATER_Zone1 0x03
+unsigned long WATER_Zone1_int   = 60000;           // mSec how long the watering valves are open Zone1
+#define WATER_Zone2 0x04
+unsigned long WATER_Zone2_int   = 60000;           // mSec how long the watering valves are open Zone2
+#define WATER_Zone3 0x05
+unsigned long WATER_Zone3_int   = 60000;           // mSec how long the watering valves are open Zone3
+#define WATER_Zone4 0x06
+unsigned long WATER_Zone4_int   = 60000;           // mSec how long the watering valves are open Zone4
+#define WATER_Zone5 0x07
+unsigned long WATER_Zone5_int   = 60000;           // mSec how long the watering valves are open Zone5
+#define INHIBIT_Zone1 0x8
+unsigned long INHIBIT_Zone1_int = 120000;          // 120000ms insures that the timers do not reset within the watering window
+#define INHIBIT_Zone2 0x09
+unsigned long INHIBIT_Zone2_int = 120000;
+#define INHIBIT_Zone3 0x0A
+unsigned long INHIBIT_Zone3_int = 120000;
+#define INHIBIT_Zone4 0x0B
+unsigned long INHIBIT_Zone4_int = 120000;
+#define INHIBIT_Zone5 0x0C
+unsigned long INHIBIT_Zone5_int = 120000;
+
+#define RUNNING     0x0D
+unsigned long RUNNING_int     = 250;              // LED toggle only indicates prgram running
+
+
+// timers
+unsigned long INHIBIT_Zone1_lastRead_millis;
+unsigned long INHIBIT_Zone2_lastRead_millis;
+unsigned long INHIBIT_Zone3_lastRead_millis;
+unsigned long INHIBIT_Zone4_lastRead_millis;
+unsigned long INHIBIT_Zone5_lastRead_millis;
+
 unsigned long WATER_Zone1_lastRead_millis;
 unsigned long WATER_Zone2_lastRead_millis;
 unsigned long WATER_Zone3_lastRead_millis;
 unsigned long WATER_Zone4_lastRead_millis;
 unsigned long WATER_Zone5_lastRead_millis;
+
+unsigned long PRINT_lastRead_millis  ;
 unsigned long RUNNING_lastRead_millis;
 
 // Variables to hold current time from decodeTime()
@@ -51,7 +76,17 @@ int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
 
-int waterSchedule[]   {6,0};       // 24 hour clock. {H,M,H,M.....}
+int waterScheduleZone1[]   {6,0,17,0};        // watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
+int waterScheduleZone2[]   {6,1,17,1};
+int waterScheduleZone3[]   {6,2,17,2};
+int waterScheduleZone4[]   {6,3,17,3};
+int waterScheduleZone5[]   {6,4,17,4};
+
+bool waterZone1Inhibit  = false;
+bool waterZone2Inhibit  = false;
+bool waterZone3Inhibit  = false;
+bool waterZone4Inhibit  = false;
+bool waterZone5Inhibit  = false;
 
 bool waterZone1ON        = false;             // true if it is time to water
 bool waterZone2ON        = false;             // true if it is time to water
@@ -63,9 +98,7 @@ bool wateringZone1ON     = false;             // true if watering is active... i
 bool wateringZone2ON     = false;             // true if watering is active... i.e. water valves are open
 bool wateringZone3ON     = false;             // true if watering is active... i.e. water valves are open
 bool wateringZone4ON     = false;             // true if watering is active... i.e. water valves are open
-bool wateringZone5ON     = false;             // Not used. true if watering is active... i.e. water valves are open
-
-
+bool wateringZone5ON     = false;             // true if watering is active... i.e. water valves are open
 
 bool  crcFAIL = false;                  // CRC used in serial communication with RPi.  NOT USED currently
 
@@ -104,6 +137,7 @@ WATER_Zone2_lastRead_millis       = current_millis;
 WATER_Zone3_lastRead_millis       = current_millis;
 WATER_Zone4_lastRead_millis       = current_millis;
 WATER_Zone5_lastRead_millis       = current_millis;
+PRINT_lastRead_millis             = current_millis;
 RUNNING_lastRead_millis           = current_millis;
 }
 
@@ -116,7 +150,11 @@ void loop() {
 
   receiveRPiData();
   
-  // check to see if it's time to water
   waterPots();
+
+  if (timer_lapsed(PRINT) == true) {  // print Time and Temp data to Serial
+    printData();
+  }
+
 
 }
