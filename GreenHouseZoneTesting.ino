@@ -20,14 +20,16 @@
 
 #define LEDpin          13
 
+#define TESTpin         3
+
 #define OFF HIGH                          // Active LOW inputs on the external relay board
 #define ON  LOW                           // Active LOW inputs on the external relay board
 
 // for the timer and time
 #define PROBE       0X01
-unsigned long PROBE_int       = 60000;
+unsigned long PROBE_int         = 60000;
 #define PRINT       0x02
-unsigned long PRINT_int       = 60000;
+unsigned long PRINT_int         = 60000;
 
 #define WATER_Zone1 0x03
 unsigned long WATER_Zone1_int   = 60000;           // mSec how long the watering valves are open Zone1
@@ -52,9 +54,9 @@ unsigned long INHIBIT_Zone5_int = 3600000;
 #define FLUSH_water   0x0D
 unsigned long FLUSH_water_int   = 15000;
 #define INHIBIT_flush 0x0E
-unsigned long INHIBIT_flush_int = 3600000;        // 2 hours
+unsigned long INHIBIT_flush_int = 3600000;          // 2 hours
 #define RUNNING     0x0F
-unsigned long RUNNING_int     = 250;              // LED toggle only indicates prgram running
+unsigned long RUNNING_int       = 250;              // LED toggle only indicates prgram running
 
 
 // timers
@@ -81,14 +83,14 @@ int UTC_hours   = 25;                    // init to 25 to prevent actions until 
 int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
-// water line purge is scheduled 1 minute before Zone1 afternoon watering time. No need to purge in the AM
-int flushSchedule[]         {16,59};
-// watering schedule. Zones must be in sequence 1,2,3,4,5. All waterings MUST be done before the inhibit timer expires (2 hours from Zone1 start)
-int waterScheduleZone1[]    {6,0,17,0};        // watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
-int waterScheduleZone2[]    {6,1,17,1};
-int waterScheduleZone3[]    {6,2,17,2};
-int waterScheduleZone4[]    {6,3,17,3};
-int waterScheduleZone5[]    {6,4,17,4};
+// (hot)water line flush should be scheduled 1-20 minutes before first afternoon watering time (any zone). No need to purge in the AM
+int flushSchedule[]         {14,30};
+// watering schedule. Inhibit timers are triggered when Zone watering starts.
+int waterScheduleZone1[]    {6,42,14,31};        // A0   watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
+int waterScheduleZone2[]    {6,43,14,32};        // A1
+int waterScheduleZone3[]    {6,44,14,33};        // A2
+int waterScheduleZone4[]    {6,45,14,34};        // A3
+int waterScheduleZone5[]    {6,46,14,35};        // A4
 
 bool waterZone1Inhibit  = false;
 bool waterZone2Inhibit  = false;
@@ -141,6 +143,9 @@ void setup() {
 
   pinMode(LEDpin, OUTPUT);                          // pin 13
   digitalWrite(LEDpin, LOW);
+
+  pinMode(TESTpin, OUTPUT);
+  digitalWrite(TESTpin, OFF);
 
 // Init the timers
 unsigned long current_millis;

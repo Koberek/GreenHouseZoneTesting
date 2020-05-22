@@ -156,12 +156,13 @@ void waterPots(void){
       if ((UTC_hours == flushSchedule[0]) && (UTC_minutes == flushSchedule[1])){
         flushinhibit = true;
         INHIBIT_flush_lastRead_millis = millis();
-        digitalWrite (flushPin, ON);
+        digitalWrite(flushPin, ON);
+        digitalWrite(TESTpin, ON);      // testing flush inhibit
         FLUSH_lastRead_millis = millis();
       }  
     }
     // check for end of flush
-    if (digitalRead(flushPin)){           // true if ON
+    if (digitalRead(!flushPin)){           // true if LOW (active low)
       if (timer_lapsed(FLUSH_water)){
         digitalWrite(flushPin, OFF);
       }
@@ -170,6 +171,7 @@ void waterPots(void){
     if (flushinhibit == true){
       if (timer_lapsed(INHIBIT_flush)){
         flushinhibit = false;
+        digitalWrite(TESTpin,OFF);
       }
     }
 
