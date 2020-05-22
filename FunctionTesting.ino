@@ -83,6 +83,19 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     else {return false;}
   }
 
+  if (PID == FLUSH_water){
+    if ((millis() - FLUSH_lastRead_millis) >= FLUSH_water_int){    // set to 60sec
+      return true;
+    }
+    else {return false;}
+  }
+
+  if (PID == INHIBIT_flush){
+    if ((millis() - INHIBIT_flush_lastRead_millis) >= INHIBIT_flush_int){    // 2 hours
+      return true;
+    }
+    else {return false;}
+  }
 
   if (PID == PRINT){
     if ((millis() - PRINT_lastRead_millis) >= PRINT_int){    // set to 60sec
@@ -99,8 +112,6 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     }
     else {return false;}
   }
-
-
 }
 
 // Read data block from RPi
@@ -139,8 +150,30 @@ void receiveRPiData(void){
 
 
 void waterPots(void){
-  bool endwatering, endinhibit;                                     // endwatering true when watering time/duration has expired
-                                   
+
+    // Water Line purge before second daily watering. First watering doesn't need a flush
+    if (flushinhibit == false){
+      if ((UTC_hours == flushSchedule[0]) && (UTC_minutes == flushSchedule[1])){
+        flushinhibit = true;
+        INHIBIT_flush_lastRead_millis = millis();
+        digitalWrite (flushPin, ON);
+        FLUSH_lastRead_millis = millis();
+      }  
+    }
+    // check for end of flush
+    if (digitalRead(flushPin)){           // true if ON
+      if (timer_lapsed(FLUSH_water)){
+        digitalWrite(flushPin, OFF);
+      }
+    }
+    // Check flush inhibit timer
+    if (flushinhibit == true){
+      if (timer_lapsed(INHIBIT_flush)){
+        flushinhibit = false;
+      }
+    }
+
+
     // ZONE 1 watering control
     if ((waterZone1ON == false) && (waterZone1Inhibit == false)){   // waterON = false if it's not time to water
       if (((UTC_hours == waterScheduleZone1[0]) && (UTC_minutes == waterScheduleZone1[1])) || 
@@ -174,7 +207,8 @@ void waterPots(void){
 
     // ZONE 2 watering control
     if ((waterZone2ON == false) && (waterZone2Inhibit == false)){   // waterON = false if it's not time to water
-      if ((UTC_hours == waterScheduleZone2[0]) && (UTC_minutes == waterScheduleZone2[1])){
+      if (((UTC_hours == waterScheduleZone2[0]) && (UTC_minutes == waterScheduleZone2[1])) || 
+         ((UTC_hours == waterScheduleZone2[2]) && (UTC_minutes == waterScheduleZone2[3]))) {
         waterZone2ON = true;                                        // waterON = time to water. Doesn't mean that watering is active
         waterZone2Inhibit = true;
         INHIBIT_Zone2_lastRead_millis = millis();                   // start the inhibit timer. Prevent early restart of watering time
@@ -204,7 +238,8 @@ void waterPots(void){
 
     // ZONE 3 watering control
     if ((waterZone3ON == false) && (waterZone3Inhibit == false)){   // waterON = false if it's not time to water
-      if ((UTC_hours == waterScheduleZone3[0]) && (UTC_minutes == waterScheduleZone3[1])){
+      if (((UTC_hours == waterScheduleZone3[0]) && (UTC_minutes == waterScheduleZone3[1])) || 
+         ((UTC_hours == waterScheduleZone3[2]) && (UTC_minutes == waterScheduleZone3[3]))) {
         waterZone3ON = true;                                        // waterON = time to water. Doesn't mean that watering is active
         waterZone3Inhibit = true;
         INHIBIT_Zone3_lastRead_millis = millis();                   // start the inhibit timer. Prevent early restart of watering time
@@ -234,7 +269,8 @@ void waterPots(void){
 
     // ZONE 4 watering control
     if ((waterZone4ON == false) && (waterZone4Inhibit == false)){   // waterON = false if it's not time to water
-      if ((UTC_hours == waterScheduleZone4[0]) && (UTC_minutes == waterScheduleZone4[1])){
+      if (((UTC_hours == waterScheduleZone4[0]) && (UTC_minutes == waterScheduleZone4[1])) || 
+         ((UTC_hours == waterScheduleZone4[2]) && (UTC_minutes == waterScheduleZone4[3]))) {
         waterZone4ON = true;                                        // waterON = time to water. Doesn't mean that watering is active
         waterZone4Inhibit = true;
         INHIBIT_Zone4_lastRead_millis = millis();                   // start the inhibit timer. Prevent early restart of watering time
@@ -264,7 +300,8 @@ void waterPots(void){
 
     // ZONE 5 watering control
     if ((waterZone5ON == false) && (waterZone5Inhibit == false)){   // waterON = false if it's not time to water
-      if ((UTC_hours == waterScheduleZone5[0]) && (UTC_minutes == waterScheduleZone5[1])){
+      if (((UTC_hours == waterScheduleZone5[0]) && (UTC_minutes == waterScheduleZone5[1])) || 
+         ((UTC_hours == waterScheduleZone5[2]) && (UTC_minutes == waterScheduleZone5[3]))) {
         waterZone5ON = true;                                        // waterON = time to water. Doesn't mean that watering is active
         waterZone5Inhibit = true;
         INHIBIT_Zone5_lastRead_millis = millis();                   // start the inhibit timer. Prevent early restart of watering time
